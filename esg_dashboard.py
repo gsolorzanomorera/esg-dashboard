@@ -114,23 +114,23 @@ PLOT_LAYOUT = dict(
     hoverlabel=dict(bgcolor="white", font_size=12),
 )
 
-def line_chart(traces, title="", height=260):
-    fig = go.Figure()
-    for t in traces:
-        fig.add_trace(t)
-    fig.update_layout(**PLOT_LAYOUT, title=dict(text=title, font_size=12, x=0), height=height)
-    return fig
-
-def bar_chart(x, y, color, title="", height=220, text=None):
-    fig = go.Figure(go.Bar(
-        x=x, y=y, marker_color=color, text=text,
-        textposition="outside", textfont_size=11,
-    ))
-    fig.update_layout(**PLOT_LAYOUT, title=dict(text=title, font_size=12, x=0), height=height)
 
 #####fix years format
 
-     fig.update_xaxes(
+     def line_chart(traces, title="", height=260):
+    fig = go.Figure()
+    
+    for t in traces:
+        fig.add_trace(t)
+
+    fig.update_layout(
+        **PLOT_LAYOUT,
+        title=dict(text=title, font_size=12, x=0),
+        height=height,
+    )
+
+    # ✅ SAME indentation level as update_layout
+    fig.update_xaxes(
         tickmode='array',
         tickvals=YEARS,
         ticktext=[str(y) for y in YEARS],
