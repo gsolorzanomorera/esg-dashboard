@@ -114,30 +114,20 @@ PLOT_LAYOUT = dict(
     hoverlabel=dict(bgcolor="white", font_size=12),
 )
 
-
-#####fix years format
 def line_chart(traces, title="", height=260):
     fig = go.Figure()
-    
     for t in traces:
         fig.add_trace(t)
-
-    fig.update_layout(
-        **PLOT_LAYOUT,
-        title=dict(text=title, font_size=12, x=0),
-        height=height,
-    )
-
-    fig.update_xaxes(
-        tickmode='array',
-        tickvals=YEARS,
-        ticktext=[str(y) for y in YEARS],
-        type='category'
-    )
-
+    fig.update_layout(**PLOT_LAYOUT, title=dict(text=title, font_size=12, x=0), height=height)
     return fig
-####
 
+def bar_chart(x, y, color, title="", height=220, text=None):
+    fig = go.Figure(go.Bar(
+        x=x, y=y, marker_color=color, text=text,
+        textposition="outside", textfont_size=11,
+    ))
+    fig.update_layout(**PLOT_LAYOUT, title=dict(text=title, font_size=12, x=0), height=height)
+    return fig
 
 def progress_bar_html(pct, color, label_l, label_r):
     return f"""
@@ -166,7 +156,7 @@ with st.sidebar:
     if uploaded:
         data_path = uploaded
     else:
-        data_path = "Lab3_Minicases_data_ecercise_canvas.xlsx"
+        data_path = "/mnt/user-data/uploads/Lab3_Minicases_data_ecercise_canvas.xlsx"
 
     company = st.radio("Select company", ["🛢 NordPetro AS", "🛒 VerdeMart Group plc"])
     st.markdown("---")
