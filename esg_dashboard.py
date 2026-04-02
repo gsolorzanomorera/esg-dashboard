@@ -128,8 +128,7 @@ def bar_chart(x, y, color, title="", height=220, text=None):
     ))
     fig.update_layout(**PLOT_LAYOUT, title=dict(text=title, font_size=12, x=0), height=height)
 
-#####
-    fix years format
+#####fix years format
 
      fig.update_xaxes(
         tickmode='array',
