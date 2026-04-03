@@ -156,7 +156,7 @@ with st.sidebar:
     if uploaded:
         data_path = uploaded
     else:
-        data_path = "/mnt/user-data/uploads/Lab3_Minicases_data_ecercise_canvas.xlsx"
+        data_path = "Lab3_Minicases_data_ecercise_canvas.xlsx"
 
     company = st.radio("Select company", ["🛢 NordPetro AS", "🛒 VerdeMart Group plc"])
     st.markdown("---")
