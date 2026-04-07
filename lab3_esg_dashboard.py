@@ -1,7 +1,7 @@
 """
 ESG Analytics Lab 3 — Module 3
 Interactive Dashboard: NordPetro AS & VerdeMart Group plc
-Run with: streamlit run lab3_esg_dashboard.py
+Run with: streamlit run esg_dashboard.py
 """
 
 # ── Imports ────────────────────────────────────────────────────────────────
