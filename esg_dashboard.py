@@ -832,8 +832,10 @@ with c7:
 with c8:
     ## Bar chart: total water withdrawal (million cubic meters)
     fig = bar_chart(
-        YEARS,
-        water_vals,
+    YEARS,
+    water_vals,
+    "Total water withdrawal (million cubic meters)"
+)
 
     # ── Row 4: Secondary metrics ───────────────────────────────────────────────
 ## Section header introducing additional (non-core) ESG indicators
