@@ -4,11 +4,65 @@ Interactive Dashboard: NordPetro AS & VerdeMart Group plc
 Run with: streamlit run esg_dashboard.py
 """
 
-import streamlit as st        ## lets you build the web app interface (buttons, text, layout, etc.)
-import pandas as pd           ## used for loading and working with data tables (DataFrames)
-import plotly.graph_objects as go   ## low‑level Plotly tools for fully customized charts
-import plotly.express as px          ## high‑level Plotly tools for quick, easy charts
-from plotly.subplots import make_subplots   ## allows you to place multiple charts in one figure
+# ── Imports ────────────────────────────────────────────────────────────────
+import streamlit as st
+import pandas as pd
+import plotly.graph_objects as go
+import plotly.express as px
+from plotly.subplots import make_subplots
+
+
+# ── Page config (must be before any UI) ─────────────────────────────────────
+st.set_page_config(
+    page_title="ESG Dashboard — Lab 3",
+    page_icon="🌿",
+    layout="wide",
+    initial_sidebar_state="expanded",
+)
+
+
+# ── Data loader (DEFINE HERE) ───────────────────────────────────────────────
+@st.cache_data
+def load_data(file_bytes):
+    xl = pd.ExcelFile(file_bytes)
+
+    def parse(sheet):
+        raw = pd.read_excel(xl, sheet_name=sheet, header=None)
+        raw.columns = raw.iloc[7]
+        raw = raw.iloc[8:].reset_index(drop=True)
+        raw.columns = ["Metric", "2019", "2021", "2022", "2023", "Unit", "Notes"]
+        raw = raw.dropna(subset=["Metric"])
+        raw["Metric"] = raw["Metric"].astype(str).str.strip()
+        return raw
+
+    return {
+        "nordpetro": parse(xl.sheet_names[0]),
+        "verdemart": parse(xl.sheet_names[1]),
+    }
+
+
+# ── Sidebar ────────────────────────────────────────────────────────────────
+with st.sidebar:
+    st.markdown("## 🌿 ESG Lab 3 — Module 3")
+    st.markdown("---")
+
+    uploaded = st.file_uploader(
+        "Upload your Excel dataset",
+        type=["xlsx"]
+    )
+
+
+# ── Load dataset ───────────────────────────────────────────────────────────
+if uploaded is not None:
+    st.info("Using uploaded file")
+    data = load_data(uploaded.getvalue())   # ✅ bytes
+else:
+    st.info("Using default dataset")
+    with open("Lab3_Minicases_data_exercise_canvas.xlsx", "rb") as f:
+        data = load_data(f.read())           # ✅ bytes
+
+
+# ── App content continues below ────────────────────────────────────────────
 
 # ── Page config ───────────────────────────────────────────────────────────────
 st.set_page_config(
