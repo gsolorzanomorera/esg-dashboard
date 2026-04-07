@@ -913,9 +913,12 @@ with c9:
 # ══════════════════════════════════════════════════════════════════════════════
 #  VERDEMART
 # ══════════════════════════════════════════════════════════════════════════════
+if company == "NordPetro":
+    df = data["nordpetro"]
 else:
     ## Select the Verdemart dataset when the company is not NordPetro
     df = data["verdemart"]
+
 
     ## Pull relevant Scope 1, 2, and 3 disclosure rows using keyword matching
     r_s3tot   = get_row(df, "Total Scope 3")
