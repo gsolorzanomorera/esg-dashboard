@@ -109,92 +109,96 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)   ## tells Streamlit to allow raw HTML/CSS
 
+
+## A list of years that will likely be used for analysis, filtering,
+## reporting, or looping over specific time periods
 YEARS = [2019, 2021, 2022, 2023]
-COLORS = {"blue": "#185FA5", "red": "#E24B4A", "amber": "#EF9F27",
-          "green": "#1D9E75", "gray": "#9ca3af", "light": "#f3f4f6"}
+
+## A dictionary that maps color names to their hexadecimal color codes
+## These hex values are commonly used in web design and data visualization
+COLORS = {
+    "blue": "#185FA5",    ## Blue color in hex format
+    "red": "#E24B4A",     ## Red color in hex format
+    "amber": "#EF9F27",   ## Amber/orange color in hex format
+    "green": "#1D9E75",   ## Green color in hex format
+    "gray": "#9ca3af",    ## Gray color in hex format
+    "light": "#f3f4f6"    ## Light gray (almost white) color in hex format
+}
 
 # ── Data loader ───────────────────────────────────────────────────────────────
+## Cache the result of this function so the data is only loaded once
+## This improves performance in Streamlit apps
 @st.cache_data
 def load_data(path: str):
+    ## Open the Excel file located at the given path
     xl = pd.ExcelFile(path)
 
+    ## Helper function to parse and clean each worksheet
     def parse(sheet):
+        ## Read the sheet without headers so we can manually define them
         raw = pd.read_excel(xl, sheet_name=sheet, header=None)
-        # header row is row 7 (index 7)
+
+        ## The actual header row is row 7 (0-based index),
+        ## so we set the column names from that row
         raw.columns = raw.iloc[7]
+
+        ## Remove all rows above the header and reset the index
         raw = raw.iloc[8:].reset_index(drop=True)
+
+        ## Rename columns to standardized, meaningful names
         raw.columns = ["Metric", "2019", "2021", "2022", "2023", "Unit", "Notes"]
+
+        ## Drop any rows where the Metric column is missing
         raw = raw.dropna(subset=["Metric"])
+
+        ## Ensure Metric values are strings and remove extra whitespace
         raw["Metric"] = raw["Metric"].astype(str).str.strip()
+
+        ## Return the cleaned DataFrame for this sheet
         return raw
 
+    ## Parse the first two sheets and return them as a dictionary
+    ## Keys represent dataset or company names
     return {
         "nordpetro": parse(xl.sheet_names[0]),
         "verdemart":  parse(xl.sheet_names[1]),
     }
 
+
+## Retrieve the first row where the Metric column contains the given keyword
 def get_row(df, keyword):
+    ## Create a boolean mask for case-insensitive partial matching
     mask = df["Metric"].str.contains(keyword, case=False, na=False)
+
+    ## If at least one match is found, return the first matching row
     if mask.any():
         return df[mask].iloc[0]
+
+    ## Return None if no matching row exists
     return None
 
+
+## Safely extract a numeric value for a given year from a row
 def num(row, year):
     try:
+        ## Access the value for the specified year
         val = row[str(year)]
+
+        ## Convert to float if the value exists, otherwise return None
         return float(val) if pd.notna(val) else None
     except Exception:
+        ## Return None if any error occurs (missing column, conversion error, etc.)
         return None
 
+
+## Generate a list of numeric values across multiple years for a metric
 def series(row, years=None):
+    ## Default to the predefined YEARS list if none is provided
     if years is None:
         years = YEARS
+
+    ## Return a list of numeric values for each year
     return [num(row, y) for y in years]
-
-# ── Chart helpers ─────────────────────────────────────────────────────────────
-PLOT_LAYOUT = dict(
-    paper_bgcolor="rgba(0,0,0,0)",
-    plot_bgcolor="rgba(0,0,0,0)",
-    font=dict(family="Arial", size=11, color="#4b5563"),
-    margin=dict(l=10, r=10, t=30, b=10),
-    xaxis=dict(showgrid=False, color="#9ca3af"),
-    yaxis=dict(gridcolor="#f3f4f6", color="#9ca3af"),
-    legend=dict(orientation="h", y=-0.2, x=0, font_size=11),
-    hoverlabel=dict(bgcolor="white", font_size=12),
-)
-
-def line_chart(traces, title="", height=260):
-    fig = go.Figure()
-    for t in traces:
-        fig.add_trace(t)
-    fig.update_layout(**PLOT_LAYOUT, title=dict(text=title, font_size=12, x=0), height=height)
-    return fig
-
-def bar_chart(x, y, color, title="", height=220, text=None):
-    fig = go.Figure(go.Bar(
-        x=x, y=y, marker_color=color, text=text,
-        textposition="outside", textfont_size=11,
-    ))
-    fig.update_layout(**PLOT_LAYOUT, title=dict(text=title, font_size=12, x=0), height=height)
-    return fig
-
-def progress_bar_html(pct, color, label_l, label_r):
-    return f"""
-    <div style='margin:8px 0;'>
-      <div style='display:flex;justify-content:space-between;font-size:11px;color:#6b7280;margin-bottom:3px;'>
-        <span>{label_l}</span><span>{label_r}</span>
-      </div>
-      <div style='background:#f3f4f6;border-radius:6px;overflow:hidden;height:18px;'>
-        <div style='width:{min(pct,100):.1f}%;background:{color};height:100%;
-                    display:flex;align-items:center;padding-left:6px;'>
-          <span style='font-size:10px;font-weight:700;color:#fff;'>{pct:.0f}%</span>
-        </div>
-      </div>
-    </div>"""
-
-def badge(text, kind="amber"):
-    return f'<span class="badge badge-{kind}">{text}</span>'
-
 # ── Sidebar ───────────────────────────────────────────────────────────────────
 with st.sidebar:
     st.markdown("## 🌿 ESG Lab 3 — Module 3")
@@ -221,59 +225,102 @@ with st.sidebar:
 
 # ── Load ──────────────────────────────────────────────────────────────────────
 try:
+    ## Attempt to load and parse the data from the specified file path
     data = load_data(data_path)
+
 except Exception as e:
+    ## Display a user-friendly error message in the Streamlit app
+    ## showing the exception that caused the failure
     st.error(f"Could not load data: {e}")
+
+    ## Immediately stop execution of the Streamlit app
+    ## to prevent further errors or invalid state
     st.stop()
 
 # ══════════════════════════════════════════════════════════════════════════════
 #  NORDPETRO
 # ══════════════════════════════════════════════════════════════════════════════
+## Check if the selected company corresponds to NordPetro
 if "NordPetro" in company:
+    ## Select the NordPetro dataset from the loaded data
     df = data["nordpetro"]
 
-    # Pull rows
-    r_s12    = get_row(df, "Scope 1.2 combined")
-    r_s1     = get_row(df, "Scope 1 emissions")
-    r_s2mkt  = get_row(df, "market-based")
-    r_s3c11  = get_row(df, "Cat.11")
-    r_total  = get_row(df, "Total footprint")
-    r_meth   = get_row(df, "Methane intensity")
-    r_meth_a = get_row(df, "Methane absolute")
-    r_capex  = get_row(df, "Green capex .absolute.")
+    ## Pull specific metric rows from the DataFrame using keyword matching
+    r_s12       = get_row(df, "Scope 1.2 combined")
+    r_s1        = get_row(df, "Scope 1 emissions")
+    r_s2mkt     = get_row(df, "market-based")
+    r_s3c11     = get_row(df, "Cat.11")
+    r_total     = get_row(df, "Total footprint")
+    r_meth      = get_row(df, "Methane intensity")
+    r_meth_a    = get_row(df, "Methane absolute")
+    r_capex     = get_row(df, "Green capex .absolute.")
     r_capex_pct = get_row(df, "Green capex as %")
-    r_re     = get_row(df, "Renewable electricity")
-    r_flare  = get_row(df, "Flaring intensity")
-    r_water  = get_row(df, "Total water")
-    r_spills = get_row(df, "Oil spills")
-    r_rnd    = get_row(df, "R.D spend")
+    r_re        = get_row(df, "Renewable electricity")
+    r_flare     = get_row(df, "Flaring intensity")
+    r_water     = get_row(df, "Total water")
+    r_spills    = get_row(df, "Oil spills")
+    r_rnd       = get_row(df, "R.D spend")
 
-    s12_vals  = series(r_s12)
+    ## Convert selected rows into time series lists across predefined years
+    s12_vals   = series(r_s12)
     s3c11_vals = series(r_s3c11)
-    s12_2023  = s12_vals[-1]
-    s3_2023   = s3c11_vals[-1]
+
+    ## Extract the most recent (2023) values from each series
+    s12_2023 = s12_vals[-1]
+    s3_2023  = s3c11_vals[-1]
+
+    ## Calculate total emissions for 2023, treating missing values as zero
     total_2023 = (s12_2023 or 0) + (s3_2023 or 0)
-    s12_pct   = round(s12_2023 / total_2023 * 100, 1) if total_2023 else 0
-    s3_pct    = round(100 - s12_pct, 1)
+
+    ## Calculate percentage contribution of Scope 1+2 emissions
+    ## Guard against division by zero
+    s12_pct = round(s12_2023 / total_2023 * 100, 1) if total_2023 else 0
+
+    ## Assign the remaining percentage to Scope 3
+    s3_pct = round(100 - s12_pct, 1)
+
+    ## Define a fixed benchmark or reduction target value
     target_35 = 10.75
+
+    ## Calculate percent change from a baseline value (21.5) to 2023
     pct_change = round((s12_2023 - 21.5) / 21.5 * 100, 1)
 
     # ── Header ─────────────────────────────────────────────────────────────────
-    st.markdown(f"""
+## Render a custom HTML block using Streamlit's markdown support
+## unsafe_allow_html=True allows raw HTML and inline CSS to be rendered
+st.markdown(f"""
+    ## Outer container card with white background, light gray border,
+    ## rounded corners, padding, and bottom margin
     <div style='background:#fff;border:1px solid #e5e7eb;border-radius:12px;
                 padding:14px 18px;margin-bottom:16px;'>
+
+      ## Title section with larger, bold text and dark color
       <div style='font-size:20px;font-weight:700;color:#111;'>
-        🛢 NordPetro AS — ESG Transition Dashboard</div>
+        🛢 NordPetro AS — ESG Transition Dashboard
+      </div>
+
+      ## Subtitle / metadata row with smaller, muted text
+      ## Provides company description, scale, geography, and data coverage
       <div style='font-size:12px;color:#6b7280;margin-top:4px;'>
         Norwegian integrated oil &amp; gas &nbsp;·&nbsp; 18,000 employees
         &nbsp;·&nbsp; 12 countries &nbsp;·&nbsp; Data: 2019–2023
       </div>
+
+      ## Badge row highlighting audience, key question, and data caveat
       <div style='margin-top:8px;'>
+        ## Target audience identification
         {badge("Audience: ESG pension fund investor","blue")}
+
+        ## Primary analytical question the dashboard aims to answer
         {badge("Primary Q: Is the 2035 transition target on track?","blue")}
+
+        ## Warning callout for partial assurance of the most recent data
         {badge("⚠ 2023 data partially unassured","amber")}
       </div>
-    </div>""", unsafe_allow_html=True)
+
+    </div>
+""", unsafe_allow_html=True)
+``
 
     # ── Row 1: Framing + Milestones ────────────────────────────────────────────
     col1, col2 = st.columns([2, 1])
