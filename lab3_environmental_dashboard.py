@@ -933,5 +933,4 @@ else:
 ## A simple horizontal rule and caption at the very bottom of the page,
 ## visible regardless of which company is selected.
 st.markdown("---")
-st.caption("ESG Analytics Lab 3 — Module 3 · Data: Lab3_Minicases_data_exercise_canvas.xlsx · ")
-           "Built with Streamlit + Plotly")
+st.caption("ESG Analytics Lab 3 — Module 3 · Data: Lab3_Minicases_data_exercise_canvas.xlsx · Built with Streamlit + Plotly")
